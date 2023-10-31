@@ -3,19 +3,15 @@ import { ReactNode } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 
-export interface TimelineProps {
+export interface PostListProps {
   children?: ReactNode | ReactNode[];
 }
 
-export default function Timeline({ children }: TimelineProps) {
+export default function PostList({ children }: PostListProps) {
   if (children) {
     if (Array.isArray(children)) {
       return (
-        <Box sx={{ width: "600px" }}>
-          {children.map((child) => {
-            return child;
-          })}
-        </Box>
+        <Box sx={{ width: "600px" }}>{children.map((child) => child)}</Box>
       );
     } else {
       return <Box sx={{ width: "600px" }}>{children}</Box>;

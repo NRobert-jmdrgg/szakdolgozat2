@@ -9,31 +9,37 @@ import ShareIcon from "@mui/icons-material/Share";
 import IconButton from "@mui/material/IconButton";
 import socialMediaNumberFormatter from "../utils/numberFormatter";
 import PostImageList from "./imageList";
+import { useAuth0 } from "@auth0/auth0-react";
 
-export interface TimelinePostProps {
+export interface PostProps {
   displayName: string;
-  profileName: string;
+  handleName: string;
   profileImage?: string;
-  heartCount: number;
+  likeCount: number;
   shareCount: number;
   replyCount: number;
-  date: number;
+  date: string;
   text?: string;
   images?: string[];
+  setLoginPopupMessage: () => void;
+  setShowLoginPopup: () => void;
 }
 
-export default function TimelinePost({
+export default function Post({
   displayName,
-  profileName,
+  handleName,
   profileImage,
-  heartCount,
+  likeCount,
   shareCount,
   replyCount,
   date,
   text,
   images,
-}: TimelinePostProps) {
-  const nHearts = socialMediaNumberFormatter(heartCount);
+  setLoginPopupMessage,
+  setShowLoginPopup,
+}: PostProps) {
+  const { isAuthenticated } = useAuth0();
+  const nLikes = socialMediaNumberFormatter(likeCount);
   const nShares = socialMediaNumberFormatter(shareCount);
   const nReplies = socialMediaNumberFormatter(replyCount);
   return (
@@ -45,7 +51,7 @@ export default function TimelinePost({
             {displayName}
           </Typography>
           <Typography sx={{ ml: "5px" }} variant="caption">
-            @{profileName}
+            @{handleName}
           </Typography>
           <Typography sx={{ ml: "5px" }} variant="caption">
             {moment(date).fromNow()}
@@ -66,9 +72,16 @@ export default function TimelinePost({
             justifyContent: "center",
           }}
         >
-          <LoveCheckbox />
+          <LoveCheckbox
+            onClick={() => {
+              if (!isAuthenticated) {
+                setLoginPopupMessage("like posts");
+                setShowLoginPopup(true);
+              }
+            }}
+          />
           <Typography variant="caption" sx={{ ml: "5px" }}>
-            {nHearts}
+            {nLikes}
           </Typography>
         </Box>
         <Box
@@ -78,7 +91,15 @@ export default function TimelinePost({
             justifyContent: "center",
           }}
         >
-          <IconButton aria-label="share">
+          <IconButton
+            aria-label="share"
+            onClick={() => {
+              if (!isAuthenticated) {
+                setLoginPopupMessage("share posts");
+                setShowLoginPopup(true);
+              }
+            }}
+          >
             <ShareIcon />
           </IconButton>
           <Typography variant="caption" sx={{ ml: "5px" }}>
@@ -92,7 +113,15 @@ export default function TimelinePost({
             justifyContent: "center",
           }}
         >
-          <IconButton aria-label="reply">
+          <IconButton
+            aria-label="reply"
+            onClick={() => {
+              if (!isAuthenticated) {
+                setLoginPopupMessage("reply to posts");
+                setShowLoginPopup(true);
+              }
+            }}
+          >
             <ReplyIcon />
           </IconButton>
           <Typography variant="caption" sx={{ ml: "5px" }}>

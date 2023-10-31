@@ -21,8 +21,23 @@ const typeDefs = gql `
     description: String
     profileImage: String
     profileBannerImage: String
-    posts: [Post!]!
-      @relationship(type: "POSTED", properties: "PostedProps", direction: OUT)
+    followerCount: Int
+      @cypher(
+        statement: """
+        MATCH (this)<-[:FOLLOWS]-()
+        RETURN count(*) as followerCount
+        """
+        columnName: "followerCount"
+      )
+    posts: [Post!]! @relationship(type: "AUTHOR_OF", direction: OUT)
+    postCount: Int
+      @cypher(
+        statement: """
+        MATCH (this)-[:AUTHOR_OF]->()
+        RETURN count(*) as postCount
+        """
+        columnName: "postCount"
+      )
     likedPosts: [Post!]!
       @relationship(
         type: "LIKES"
@@ -41,10 +56,111 @@ const typeDefs = gql `
         properties: "FollowedUsersProps"
         direction: IN
       )
+    visitedUsers: [User!]!
+      @relationship(
+        type: "VISITS"
+        properties: "VisitedUsersProps"
+        direction: OUT
+      )
+    visitedBy: [User!]!
+      @relationship(
+        type: "VISITS"
+        properties: "VisitedUsersProps"
+        direction: IN
+      )
+    viewedPost: [Post!]!
+      @relationship(
+        type: "VIEWS"
+        properties: "ViewedPostProps"
+        direction: OUT
+      )
+    sharedPost: [Post!]!
+      @relationship(
+        type: "SHARES"
+        properties: "SharedPostProps"
+        direction: OUT
+      )
   }
 
-  interface PostedProps @relationshipProperties {
+  type Post {
+    postId: ID! @id @unique
+    author: User! @relationship(type: "AUTHOR_OF", direction: IN)
     createdAt: DateTime! @timestamp(operations: [CREATE])
+    text: String
+    imagePaths: [String!]
+    mentions: [String!]
+    links: [Link!]! @relationship(type: "CONTAINS", direction: OUT)
+    hashtags: [Hashtag!]! @relationship(type: "CONTAINS", direction: OUT)
+    categories: [PostCategory!]
+    likeCount: Int
+      @cypher(
+        statement: """
+        MATCH (this)<-[:LIKES]-()
+          RETURN count(*) as likeCount
+        """
+        columnName: "likeCount"
+      )
+    replyCount: Int
+      @cypher(
+        statement: """
+        MATCH (this)<-[:REPLIES_TO]-()
+          RETURN count(*) as replyCount
+        """
+        columnName: "replyCount"
+      )
+    shareCount: Int
+      @cypher(
+        statement: """
+        MATCH (this)<-[:SHARES]-()
+        MATCH (this)<-[:QUOTES]-()
+          RETURN count(*) as shareCount
+        """
+        columnName: "shareCount"
+      )
+    likedBy: [User!]!
+      @relationship(type: "LIKES", properties: "LikedPostsProps", direction: IN)
+    repliesTo: [Post!]! @relationship(type: "REPLIES_TO", direction: OUT)
+    replies: [Post!]! @relationship(type: "REPLIES_TO", direction: IN)
+    quotes: [Post!]! @relationship(type: "QUOTES", direction: OUT)
+    quotedBy: [Post!]! @relationship(type: "QUOTES", direction: IN)
+    viewedBy: [User!]!
+      @relationship(
+        type: "VIEWED"
+        properties: "ViewedPostProps"
+        direction: OUT
+      )
+    sharedBy: [User!]!
+      @relationship(
+        type: "SHARES"
+        properties: "SharedPostProps"
+        direction: IN
+      )
+  }
+
+  type Link {
+    url: String!
+    post: [Post!]! @relationship(type: "CONTAINS", direction: IN)
+  }
+
+  type Hashtag {
+    tag: String!
+    post: [Post!]! @relationship(type: "CONTAINS", direction: IN)
+  }
+
+  interface SharedPostProps @relationshipProperties {
+    createdAt: DateTime! @timestamp(operations: [CREATE])
+  }
+
+  interface ViewedPostProps @relationshipProperties {
+    createdAt: DateTime! @timestamp(operations: [CREATE])
+    updatedAt: DateTime! @timestamp(operations: [UPDATE])
+    times: Int!
+  }
+
+  interface VisitedUsersProps @relationshipProperties {
+    createdAt: DateTime! @timestamp(operations: [CREATE])
+    updatedAt: DateTime! @timestamp(operations: [UPDATE])
+    times: Int!
   }
 
   interface LikedPostsProps @relationshipProperties {
@@ -53,24 +169,6 @@ const typeDefs = gql `
 
   interface FollowedUsersProps @relationshipProperties {
     createdAt: DateTime! @timestamp(operations: [CREATE])
-  }
-
-  type Post {
-    postId: ID! @id @unique
-    author: User!
-      @relationship(type: "POSTED", properties: "PostedProps", direction: IN)
-    text: String
-    imagePaths: [String!]
-    mentions: [String!]
-    links: [String!]
-    hashtags: [String!]
-    categories: [PostCategory!]
-    likedBy: [User!]!
-      @relationship(type: "LIKES", properties: "LikedPostsProps", direction: IN)
-    repliesTo: Post! @relationship(type: "REPLIES_TO", direction: OUT)
-    replies: [Post!]! @relationship(type: "REPLIES_TO", direction: IN)
-    quotes: Post! @relationship(type: "QUOTES", direction: OUT)
-    quotedBy: [Post!]! @relationship(type: "QUOTES", direction: IN)
   }
 
   enum PostCategory {
@@ -151,8 +249,14 @@ async function main() {
     catch (error) {
         console.log(error);
     }
-    app.use("/graphql", cors(), bodyParser.json(), expressMiddleware(server, {
-        context: async ({ req }) => ({ req }),
+    app.use("/graphql", cors({
+        origin: process.env.CLIENT_URI,
+        credentials: true,
+    }), bodyParser.json(), expressMiddleware(server, {
+        context: async ({ req }) => ({
+            token: req.headers.authorization,
+            driver: driver,
+        }),
     }));
     const port = process.env.PORT;
     httpServer.listen(port, () => {

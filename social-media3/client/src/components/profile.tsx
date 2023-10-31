@@ -7,7 +7,7 @@ import socialMediaNumberFormatter from "../utils/numberFormatter";
 
 export interface ProfileProps {
   displayName: string;
-  profileName: string;
+  handleName: string;
   description: string;
   followerCount: number;
   postCount: number;
@@ -17,20 +17,20 @@ export interface ProfileProps {
 
 export default function Profile({
   displayName,
-  profileName,
+  handleName,
   description,
   followerCount,
   postCount,
   profileImage,
   profileBannerImage,
 }: ProfileProps) {
-  const nFollowers = socialMediaNumberFormatter(followerCount);
   const nPosts = socialMediaNumberFormatter(postCount);
+  const nFollowers = socialMediaNumberFormatter(followerCount);
   return (
     <Box sx={{ backgroundColor: "primary.dark", width: "600px" }}>
       <Box>
         <img
-          src={profileBannerImage}
+          src={profileBannerImage ?? "/default_banner.png"}
           alt="Profile banner"
           width="600px"
           height="200px"
@@ -50,7 +50,7 @@ export default function Profile({
             <Typography variant="h5">{displayName}</Typography>
           </Box>
           <Box>
-            <Typography variant="caption">@{profileName}</Typography>
+            <Typography variant="caption">@{handleName}</Typography>
           </Box>
         </Box>
         <Box sx={{ ml: "auto", mr: "10px" }}>
@@ -60,12 +60,12 @@ export default function Profile({
       <Box sx={{ ml: "10px", mt: "10px" }}>
         <Typography variant="body2">{description}</Typography>
       </Box>
-      <Box sx={{ display: "flex", mt: "10px", ml: "10px" }}>
-        <Typography variant="caption" sx={{ mr: "10px" }}>
-          {nFollowers} followrs
-        </Typography>
+      <Box sx={{ mt: "10px", ml: "10px" }}>
         <Typography variant="caption" sx={{ mb: "10px" }}>
           {nPosts} posts
+        </Typography>
+        <Typography variant="caption" sx={{ mb: "10px", ml: "10px" }}>
+          {nFollowers} followers
         </Typography>
       </Box>
     </Box>

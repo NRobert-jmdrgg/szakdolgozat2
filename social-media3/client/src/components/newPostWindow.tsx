@@ -5,52 +5,22 @@ import TextField from "@mui/material/TextField";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import ImageIcon from "@mui/icons-material/Image";
-import CloseIcon from "@mui/icons-material/Close";
+import FloatingWindow from "../containers/floatingWindow";
 
 export interface NewPostProps {
-  hide: () => void;
+  onClick: () => void;
 }
 
-export default function NewPost({ hide }: NewPostProps) {
+export default function NewPostWindow({ onClick }: NewPostProps) {
   const [count, setCount] = React.useState(0);
 
   return (
-    <Box
-      sx={{
-        zIndex: 999,
-        display: "flex",
-        textAlign: "center",
-        alignItems: "center",
-        justifyContent: "center",
-        position: "absolute",
-        width: "100%",
-        bgcolor: "rgba(0, 0, 0, 0.7)",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-      }}
+    <FloatingWindow
+      height="280px"
+      message="Create a new post"
+      onClick={onClick}
     >
-      <Box
-        sx={{
-          backgroundColor: "primary.dark",
-          width: "600px",
-          height: "280px",
-        }}
-      >
-        <Box sx={{ display: "flex", mt: "10px" }}>
-          <Typography variant="h6" sx={{ ml: "10px" }}>
-            Create a new post
-          </Typography>
-          <IconButton
-            aria-label="share"
-            sx={{ ml: "auto", mr: "10px" }}
-            onClick={hide}
-          >
-            <CloseIcon />
-          </IconButton>
-        </Box>
-
+      <Box>
         <Box sx={{ width: "580px" }}>
           <TextField
             id="outlined-multiline-flexible"
@@ -78,6 +48,6 @@ export default function NewPost({ hide }: NewPostProps) {
           </Box>
         </Box>
       </Box>
-    </Box>
+    </FloatingWindow>
   );
 }

@@ -40,14 +40,16 @@ export function FormCheckbox({
 
 export interface LoveCheckboxProps {
   defaultChecked?: boolean;
+  onClick?: () => void;
 }
 
-export function LoveCheckbox({ defaultChecked }: LoveCheckboxProps) {
+export function LoveCheckbox({ defaultChecked, onClick }: LoveCheckboxProps) {
   return (
     <Checkbox
       defaultChecked={defaultChecked}
       icon={<FavoriteBorder />}
       checkedIcon={<Favorite />}
+      onClick={onClick}
       sx={{
         "&.Mui-checked": {
           color: red[600],
